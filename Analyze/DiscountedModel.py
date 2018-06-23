@@ -1,7 +1,6 @@
 from Analyze import Ratios #@UnresolvedImport
 from Analyze import GetData #@UnresolvedImport
 
-
 def discountedCashFlow(tickerName):
     data, variables, price, priceAvg, ones = GetData.getData(tickerName)
     index_freeCashFlowQ = 0
@@ -143,7 +142,7 @@ def discountedCashFlow(tickerName):
     numShares = Ratios.numShares(tickerName)
     """Intrinsic Price w/o dividends  """
     intrinsicPrice = intrinsic/numShares
-     
+
     return intrinsicPrice
 
     

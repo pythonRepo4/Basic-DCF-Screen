@@ -129,10 +129,11 @@ def MLanalysis(tickerName):
 #     for i in data:
 #         print(i)
      
-    keywordsList = [["Revenues-Q","Dividends per Basic Common Share-Q"],
-                    ["Revenues-T", "Dividends per Basic Common Share-T"],
-                    ["Free Cash Flow-QC","Book Value per Share-QM"],
-                    ["Operating Expenses-Q", "Cash and Equivalents-QB"]
+    keywordsList = [
+                    ["Net Income-T"],
+                    ["Book Value per Share-QM"],
+                    ["Free Cash Flow-TC"],
+                    ["Revenues-T"]
         ]
      
     """yready is an array of average prices """
@@ -212,10 +213,13 @@ def MLanalysis(tickerName):
         Xready = Xready[1:]
         ml = stat.multipleLinearReg(Xready,yready)
 #         print(Xregressors)
+#         print('hello')
 #         for i in Xready:
 #             print(i)
 #         print(ml)
 #         print(keywords)
+#         for i in yready:
+#             print(i)
           
         """Find a regressed price with Xregressors data"""
         coeffs = ml[0]
@@ -225,7 +229,7 @@ def MLanalysis(tickerName):
             regressedPrice += Xregressors[i] * coeffs[i]
       
 #         print(coeffs)
-#         print(regressedPrice)
+#         print("Regressed = " + str(regressedPrice))
           
         ml.append(regressedPrice[0])
         ml.append(keywords)
@@ -248,7 +252,3 @@ def MLanalysis(tickerName):
     """Returns an array in the following format:
     [coefficients, radjusted, regressedPrice, keywords ] """
 #     return multipleLinear
-
-# MLanalysis('SHLD')
-# MLanalysis('COST')
-# MLanalysis('WMT')

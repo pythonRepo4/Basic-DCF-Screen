@@ -1,97 +1,94 @@
-from Analyze import DiscountedModel #@UnresolvedImport
-from Analyze import GetData #@UnresolvedImport
-from Analyze import Regression #@UnresolvedImport
-from Analyze import Ratios #@UnresolvedImport
-from RegressionData import Interface as RegressionData #@UnresolvedImport
-
 """-----------------------------------------------------------------------------------
-
 Stock screener will make buy recommendations by using regressed price, discount cash flow, 
 and ratios. 
-
 -----------------------------------------------------------------------------------"""    
-def showAnalysis(tickerName):
-    multipleFits = RegressionData.getRegressionData(tickerName)
-    discountedPrice = float(DiscountedModel.discountedCashFlow(tickerName))
-    todaysPrice, PE, PS, PB, totalDebtToAssetsQ, incomeQualityQ, ROIC, incomeQualityTTM, inventoryTurnoverTTM = Ratios.getStatistics(tickerName)
-    ROIC = float(ROIC) * 100
+
+from Analyze import DiscountedModel  # @UnresolvedImport
+from Analyze import GetData  # @UnresolvedImport
+from Analyze import Ratios  # @UnresolvedImport
+from Analyze import Regression  # @UnresolvedImport
+from Analyze import ReproductionEPV  # @UnresolvedImport
+from Analyze import Value  # @UnresolvedImport
+from HistoricalPricesData import Interface as HistoricalPrices  # @UnresolvedImport
+from RegressionData import Interface as RegressionData  # @UnresolvedImport
+import Utility
+
+def screen(tickerName):
+    getData = GetData.getData(tickerName)
+    f = Ratios.TickerFundamentals(tickerName, getData)
+    fcfNow, fcfAvg, value, valueAvg = Value.getValue(tickerName, getData)
+    debtToAssets = f.getDebt()
+    goodwill = f.getGoodwill()
+    ROIC = f.getROIC()[1][0]
+#     return ROIC
+    todaysPrice = HistoricalPrices.getTodaysPriceOffline(tickerName)
+    price_thresholdBuy = todaysPrice + (todaysPrice) * .20
     
-    """At this point this is a buy """
     print(tickerName)
-    print("Todays Price : " + "{0:.2f}".format(todaysPrice))
-    print("P/E : " + "{0:.2f}".format(PE))
-#     print("P/S : " + "{0:.2f}".format(PS))
-#     print("P/B : " + "{0:.2f}".format(PB))
-#     print("ROIC : " + "{0:.2f}".format(float(ROIC)) + '%')
-    
-    regressedPrices = []
-    
-    for i in multipleFits:
-        """MultipleFits returns [0 - radjusted, 1 - regressedPrice, 2 - keywords ]"""
-        radjusted, regressedPrice, keywords = i[0], float(i[1]), i[2]
-        regressedPrices.append(regressedPrice)
-    regressedPrices.sort()
-
-    print("Multiple linear analysis gives a target price between " + "{0:.2f}".format(regressedPrices[0]) + " - " 
-          + "{0:.2f}".format(regressedPrices[len(regressedPrices) - 1]))
-    print("Multiple linear analysis performed between price and variables such as revenues, dividends, book value, etc")
-    
-#     print("Todays Price = " + "{0:.2f}".format(todaysPrice))
-#     for i in multipleFits:
-#         print("R2 = " + "{0:.2f}".format(i[0]) + " | Regressed Price = " + "{0:.2f}".format(i[1]) + " | " + str(i[2]))
-    
-    print("Discounted price = " + "{0:.2f}".format(discountedPrice))
-    print("DCF is done with a conservative 12% discount rate and 2.5% long term growth rate")
-    
-    fairValue = (sum(regressedPrices)/ len(regressedPrices)) * 0.5 + discountedPrice  * 0.5
-
-        
-    print("From Multiple linear analysis and DCF, and approximate fair value is = $" + "{0:.2f}".format(fairValue))
+    print("Todays Price = " + str(todaysPrice))
+    print("ROIC = " + str(ROIC))
+    print("FCF Now : " + "{:,}".format(fcfNow))
+    print("FCF 3yr Avg : " + "{:,}".format(fcfAvg))
+    print("Approximate Value (10% discount rate) at [no growth, low growth, high growth]: " + str(value))
+    print("Approximate Value using 3yr Avg (10% discount rate) at [no growth, low growth, high growth]: " + str(valueAvg))
+    if(debtToAssets > 0.75):
+        print("WARNING : Debt is very high")
+    if(goodwill > .5):
+        print("WARNING : Intangible Assets very high")
     print("")
 
 
-"""-----------------------------------------------------------------------------------
-
-Stock screener will make buy recommendations by using regressed price, discount cash flow, 
-and ratios. 
-
------------------------------------------------------------------------------------"""    
-def screen(tickerName):
-    multipleFits = RegressionData.getRegressionData(tickerName)
-    discountedPrice = float(DiscountedModel.discountedCashFlow(tickerName))
-    todaysPrice, PE, PS, PB, totalDebtToAssetsQ, incomeQualityQ, ROIC, incomeQualityTTM, inventoryTurnoverTTM = Ratios.getStatistics(tickerName)
-    price_thresholdBuy = todaysPrice + (todaysPrice * 0.05)
-    _, dividend = Ratios.getDividends(tickerName)
+def showAnalysis(tickerName):
+    getData = GetData.getData(tickerName)
+    f = Ratios.TickerFundamentals(tickerName, getData)
+    value = Value.getValue(tickerName, getData)
+    debtToEquity = f.getDebt()[0][0]
+    debtToAssets = f.getDebt()[1][0]
+    goodwill = f.getGoodwill()[0]
+    ROIC = sum(f.getROIC()[1])/len(f.getROIC()[1])
     
-    if(dividend < 0.035):
+    todaysPrice = HistoricalPrices.getTodaysPriceOffline(tickerName)
+    price_thresholdBuy = todaysPrice + (todaysPrice) * .20
+ 
+    """Screen Debt to Equity / Debt to Assets / Goodwill to Assets
+    average DtE  1.3734983030849515
+    average DtA 0.3840499950252389
+    average Goodwill to assets  0.26169776351155205
+    """
+    if(debtToEquity > 1.3 or debtToEquity < 0):
+        print('Debt To Equity too high')
+    if(debtToAssets > 0.4):
+        print('Debt To Assets too high')
+    if(goodwill > .3):
+        print('Goodwill too high')
+
+    if(debtToEquity > 1.3 or debtToEquity < 0):
+        print("Debt is very high")
+    if(debtToAssets > 0.75):
         return
-
-    print(tickerName + ' Dividend '  + str(dividend))
-    
-
-    """Screen multiple fits. [r^2, regressed, variables] """
-    buySignals = 0
-    for i in multipleFits:
-        r2, regressedPrice = i[0], i[1]
-        if(r2 > 0.75 and regressedPrice > price_thresholdBuy):
-            buySignals += 1
-    
-    if(buySignals < len(multipleFits)/2):
+    if(goodwill > .5):
         return
-    
-    """Screen discounted price """
-    if(discountedPrice > price_thresholdBuy):
-        pass
-    else:
-        return
+    print(tickerName + " - buy signal")
+    print("Todays Price = " + str(todaysPrice))
+    print("ROIC = " + str(ROIC))
+    print("Value : " + str(value))
+    print("")
 
-    """Screen P/E ratio """
-    if(PE > 25):
-        return
+def equityScreen(tickerName):
+    getData = GetData.getData(tickerName)
+    todaysPrice = HistoricalPrices.getTodaysPriceOffline(tickerName)
     
-    """At this point this is a buy """
-    print("----- Buy Signal -----")
-    print("Todays Price = " + "{0:.2f}".format(todaysPrice))
-    for i in multipleFits:
-        print("R2 = " + "{0:.2f}".format(i[0]) + " | Regressed Price = " + "{0:.2f}".format(i[1]) + " | " + str(i[2]))
-    print("Discounted price = " + "{0:.2f}".format(discountedPrice) + " | PE = " + "{0:.2f}".format(PE))
+    equityValue = Value.getEquityValue(tickerName, getData)
+    
+    print(tickerName + " : " + str(todaysPrice))
+    for i in equityValue:
+        print(i)
+        
+# list = ['BRKB', 'UVE', 'AIG', 'CB', 'CINF', 'HIG', 'L', 'PGR', 'TRV', 'XL', 'ANAT', 'AFSI', 'ACGL', 'ESGR', 'NGHC', 'SIGI', 'Y', 'AFG', 'AHL', 'AXS', 'CNA', 'RE', 'FAF', 'KMPR', 'MKL', 'MCY', 'MTG', 'ORI', 'RDN', 'RNR', 'RLI', 'THG', 'VR', 'WRB', 'WTM', 'AMSF', 'AGII', 'EMCI', 'GBLI', 'IPCC', 'JRVR', 'SAFT', 'STFC', 'NAVG',
+#         'BLMT', 'SFBC', 'SFST', 'C', 'JPM', 'PNC', 'STI', 'WFC', 'HOMB', 'BAC', 'GWB', 'STL', 'GNBC', 'NCBS', 'RNST', 'STBZ','OZRK', 'BBT', 'RF', 'HBHC', 'IBKC', 'PNFP', 'TRMK', 'BXS', 'FNB', 'FHN', 'CSFL']
+#  
+# for i in list:
+#     print(i)
+#     equityScreen(i)
+#     print("")
+    

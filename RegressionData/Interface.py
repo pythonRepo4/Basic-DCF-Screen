@@ -40,21 +40,38 @@ def getRegressionData(tickerName):
     
     return ML
 
-def removeTable(tickerName):
-    sql.execute('DROP TABLE IF EXISTS ' + tickerName, None)
-    
-
-def getAllTables():
+def getAll():
     allTables = sql.executeReturn("SELECT name FROM sqlite_master WHERE type = 'table';")
-    tables = []
-    
-    for i in allTables:
-        print(i)
-        
-    for i in allTables:
-        tables.append(i[0])
-    
-    return tables
-    
-        
-# getAllTables()
+    return allTables
+
+def deleteTicker(tickerName):
+    sql.execute('DROP TABLE IF EXISTS ' + tickerName, None)
+
+# list = sql.executeReturn11('SELECT * FROM list')
+# 
+# count = 0
+# while(list[count][0] != 'CHKP'):
+#     count += 1
+#     
+# while(count < len(list)):
+#     try:
+#         i = list[count]
+#         print(i)
+#         data = getML(i[0])
+#         insertML(i[0], data)
+#         count +=1 
+#     except:
+#         count += 1
+#         pass
+
+# data = getML('AAPL')
+# for i in data:
+#     print(i)
+
+"""-----------------------------------------------------------------------------------
+
+Vacuum database. Removes empty tables in sqlite database.
+
+-----------------------------------------------------------------------------------"""
+def vacuum():
+    sql.execute("VACUUM", None)

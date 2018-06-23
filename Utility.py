@@ -1,8 +1,18 @@
 import time
 import gzip
-from bs4 import BeautifulSoup
 from urllib import request
+from bs4 import BeautifulSoup
 
+'''-----------------------------------------------------------------------------------
+
+Utility float 
+
+-----------------------------------------------------------------------------------'''
+def myFloat(input):
+    if(input == ''  or input == ' '):
+        return 0 
+    else:
+        return float(input)
 
 '''-----------------------------------------------------------------------------------
 
@@ -23,90 +33,6 @@ def getTodaysDate():
     return dateSplit[0] + '/' + dateSplit[1] + '/' + dateSplit[2]
 
 
-'''-----------------------------------------------------------------------------------
-
-This function returns current price of tickerName
-Works As of 11/24/2016
-
------------------------------------------------------------------------------------'''
-def getTodaysPrice(tickerName):
-    url2 = "http://finance.yahoo.com/quote/" + tickerName 
-    url1 = "https://www.google.com/finance?q=" + tickerName
-    todaysPrice = -1.1
-    htmlStr = ''
-    index0 = 0 
-    index1 = 0
-    counter = 0
-    gotPrice = False
-
-    """Try google finance first """
-    try:
-        tempWebFile = request.urlopen(url1).read()
-        tempData = BeautifulSoup(tempWebFile, "lxml")
-        html = tempData.prettify()
-        lines = tempData.find_all('meta')
-     
-        payload = ''
-        price = ''
-        for i in lines:
-            marker = 'meta content="'
-            line = str(i)
-            index0 = line.find(marker)
-     
-            if(index0 != None):
-                payload = line[index0 + len(marker):]
-    #             print(payload)
-                 
-                index2 = payload.find('"')
-                 
-                price = payload[:index2]
-                price = price.replace(',','')
-                 
-                try:
-                    todaysPrice = float(price)
-                    return todaysPrice
-                except:
-                    pass
-    except:
-        pass
-    
-
-            
-    """If doesn't work, try Yahoo finance"""
-    try:
-        tempWebFile = request.urlopen(url2).read()
-        tempData = BeautifulSoup(tempWebFile,"lxml")
-        html = tempData.prettify()  
-    except:
-        return -1
-    
-    lines = tempData.find_all('span')
-     
-    payload = ''
-    price = ''
-    for i in lines:
-#         print(i)
-        marker = 'span class="Trsdu(0.3s) Fw(b)'
-        line = str(i)
-        index0 = line.find(marker)
- 
-        if(index0 != None):
-            payload = line[index0:]
-             
-            index1 = payload.find('>')
-            index2 = payload.find('<')
-             
-            price = payload[index1+1:index2]
-            price = price.replace(',','')
-             
-            try:
-                todaysPrice = float(price)
-                return todaysPrice
-            except:
-                pass
-    return -1
-
-# print(getTodaysPrice('AAL'))
 '''-------------------------------------------------------
 
 Checks to see if two arrays are very similar
@@ -294,3 +220,17 @@ def removeTags(string):
 # print(getInfo("AAPL"))
 
 
+"""---------------------------------------------------------
+Inverts a 2D array
+---------------------------------------------------------"""
+def invert(data):
+    tempData = data
+    data = []
+    for i in range(0,len(tempData[0])):
+        tempArray = []
+        for j in range(0,len(tempData)):
+            tempArray.append(tempData[j][i])
+#             print(tempArray)
+        data.append(tempArray)
+        
+    return data

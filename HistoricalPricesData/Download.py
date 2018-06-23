@@ -111,7 +111,6 @@ def getHistoricalPrices(tickerName):
     if(firstDate < 2016):
         yahoo_data_array.reverse()
     
-    
     i = 0
     while(i < len(yahoo_data_array)):
         if('null' in yahoo_data_array[i]):
@@ -123,11 +122,7 @@ def getHistoricalPrices(tickerName):
     
     return yahoo_data_array
 
-    
-# insertHistoricalData('AMWD')
-# data = interface.getHistoricalClose('AAPL')
-# for i in data:
-#     print(i)
+
 
 """-----------------------------------------------------------------------------------
 
@@ -220,6 +215,7 @@ def updateHistoricalPrice(tickerName, sqlData):
         index = priceInfo.find('>')
         
     latestSQLDate = sqlData[0][0]
+
     
     index = 0
     for i in priceHistory:
@@ -236,6 +232,13 @@ def updateHistoricalPrice(tickerName, sqlData):
     for i in sqlData:
         if(len(i) < 8):
             i.append(i[4])
+            
+    """If the price history has "Stock Split" in it, remove from array. """
+    for i in sqlData:
+        if('Stock Split' in i):
+            sqlData.remove(i)
+        if(i[1] == '-' or i[2] == '-'):
+            sqlData.remove(i)
     
     sqlData = addHistoricalSplit(sqlData) 
         

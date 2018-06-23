@@ -31,4 +31,3 @@ def executeReturn(commands):
     conn.close()
     
     return returnArray    
-
