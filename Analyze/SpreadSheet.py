@@ -35,5 +35,3 @@ def annualIncome(tickerName):
     for i in spreadSheet:
         print(i)
 
-
-# annualIncome("FB")

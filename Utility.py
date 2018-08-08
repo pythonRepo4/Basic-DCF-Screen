@@ -14,6 +14,7 @@ def myFloat(input):
     else:
         return float(input)
 
+
 '''-----------------------------------------------------------------------------------
 
 This function returns current date in MM/DD/YYYY formate. If month is april, m = 4 not 04

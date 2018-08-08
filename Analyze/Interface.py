@@ -22,7 +22,9 @@ def screen(tickerName):
 Screen All
 -----------------------------------------------------------------------------------""" 
 def screenAll():
+#     noBuy = ["IDCC", ""]
     list = IndexData.getList()
+#     list = ['ROL', 'TSE', 'UNH', 'AMAT', 'BBY', 'HRB', 'CHRW', 'CELG', 'CI', 'CLX', 'CL', 'EW', 'EA', 'GRMN', 'HAS', 'HUM', 'KLAC', 'LB', 'LRCX', 'LYB', 'MAS', 'MCD', 'MTD', 'MU', 'MSFT', 'MNST', 'MSI', 'NVDA', 'REGN', 'RHI', 'ROK', 'SHW', 'TXN', 'HSY', 'UPS', 'VAR', 'INCY', 'MXIM', 'SIRI', 'ABMD', 'AZPN', 'CDNS', 'CDK', 'CBPO', 'CRUS', 'CGNX', 'FIVE', 'LOPE', 'HA', 'HQY', 'LSTR', 'LOGI', 'LULU', 'LITE', 'MTCH', 'PZZA', 'PPC', 'SAFM', 'STMP', 'BIO', 'BURL', 'BWXT', 'CC', 'ENR', 'EPAM', 'GDDY', 'GGG', 'HLF', 'LPI', 'LEA', 'LII', 'LPX', 'RES', 'NOW', 'TNH', 'THO', 'TTC', 'VEEV', 'VC', 'WBC', 'WSM', 'YELP', 'PZZA', 'PZZA', 'DENN', 'IRBT', 'KBAL', 'QLYS', 'RUTH', 'PRSC', 'UCTT', 'WING']
     buyList = []
     badList = []
       
@@ -31,13 +33,18 @@ def screenAll():
         if("Financial" in IndexData.getTickerIndustryList(i)[1]):
             continue
         try:
-#             roic = screen(i)
+            Screen.simpleAnalysis(i)
+#             roic = Screen.getROIC(i)
+#             print(i)
+#             print(roic)
 #             if(roic > .3 and roic < .5):
 #                 print(i)
 #                 print(roic)
 #                 buyList.append(i)
-            if(screen(i) == True):
-                buyList.append(i)
+
+#             """Screen """
+#             if(screen(i) == True):
+#                 buyList.append(i)
         except:
             print(i + ' ERROR')
             badList.append(i)
@@ -45,6 +52,3 @@ def screenAll():
 
     print(badList)
     print(buyList)
-
-# screenAll()
-

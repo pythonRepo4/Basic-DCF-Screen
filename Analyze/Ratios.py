@@ -5,10 +5,9 @@ from IndexData import Interface as IndexData
 
 from os import path
 import sys
-sys.path.insert(0, 'D:\\Eclipse Library\\')
 sys.path.insert(0, 'D:\\Eclipse Library\\SEC_Scrape')
+sys.path.insert(0, 'D:\\Eclipse Library')
 from SEC_Scrape.SQL.SQLMethods import getDebtData as opLease
-
 
 class TickerFundamentals:
     tickerName = ''
@@ -27,8 +26,10 @@ class TickerFundamentals:
             self.data, self.variables, self.price, self.priceAvg, self.ones = getData
 
     """Will return an array of variable (Revenues-T, EPS-T, etc) for all dates"""
-    def getVariable(self, variable):
+    def getVariable(self, variable, variableOth = None):
         variableArray = []
+        if(variableOth == None):
+            variableOth = " 3333 333 "
         
         j = 0 
         """Go back 10 years or until j < len(data) """
@@ -36,7 +37,7 @@ class TickerFundamentals:
             count = 0
             tempVar = ""
             for i in self.variables:
-                if(i == variable):
+                if(i == variable or i == variableOth):
                     tempVar = self.data[j][count]
                 count += 1
             
@@ -44,7 +45,7 @@ class TickerFundamentals:
             j += 4
         
         return variableArray
-    
+
     def numShares(self):
         return self.getVariable("Weighted Average Shares-Q")
     
@@ -70,7 +71,7 @@ class TickerFundamentals:
             return 0
 
     def getCashDebt(self):
-        cash = self.getVariable("Cash and Equivalents-QB")
+        cash = self.getVariable("Cash and cash equivalents-QB", "Cash and Equivalents-QB")
         investments = self.getVariable("Investments-QB")
         debt = self.getVariable("Total Debt-QB")
         deposits = self.getVariable("Deposit Liabilities-QB")
@@ -152,6 +153,7 @@ class TickerFundamentals:
             except:
                 costOfDebt = .025
             operatingLeases = opLease(self.tickerName, yearStart - i)
+
             tempPV = 0
             if(operatingLeases == None):
                 PVOpLease.append(0)
@@ -188,8 +190,10 @@ class TickerFundamentals:
         depreciation = []
         for i in PVOpLease:
             depreciation.append(i/8)
-            
         
+#         print("PV Op Lease")
+#         for i in PVOpLease:
+#             print(i)
             
         return PVOpLease, currentYear, depreciation
 
@@ -199,17 +203,20 @@ class TickerFundamentals:
         RDAmortization = self.getCapitalizedRDSGA()
         operatingLease, currentYear, leaseDepr = self.getOpLeases()
         
-        EBIT = self.getVariable("EBIT-T")
+        EBIT = self.getVariable("Earnings before Tax-T")
 
         """NOPLAT is calculated as EBIT + current research + SG&A - RDSGA amortiziation 
         LESS adjusted taxes. (Effective Tax Rate not actual paid)  """
         for i in range(0, len(EBIT)):
             _ , RDamor = RDAmortization[i] 
-            taxRate = .21
+            taxRate = .25
             NOPLAT = (Utility.myFloat(EBIT[i]) + Utility.myFloat(rdaArray[i]) - RDamor) * (1 - taxRate) + currentYear[i] - leaseDepr[i]
             NOPLATarray.append(NOPLAT)
-#             print(str(EBIT[i]) + " : " + str(rd[i]) + " : " + str(sga[i]))
+#             print(str(EBIT[i]) + " : " + str(rdaArray[i]) + " : " + str(RDamor) + " : " + str(currentYear[i]) + " : " + str(leaseDepr[i]) )
 #             print(NOPLAT)
+#         print("NOPLAT")
+#         for i in NOPLATarray:
+#             print(i)
         return NOPLATarray
         
     def getInvestedCapital(self):  
@@ -245,7 +252,7 @@ class TickerFundamentals:
             investedCapital2 = Utility.myFloat(totalAssets[i]) - Utility.myFloat(totalLiabilities[i]) + Utility.myFloat(totalDebt[i]) + researchCap - researchAmor - \
             (.80 * Utility.myFloat(cash[i])) - Utility.myFloat(nonCurrent[i]) + operatingLease[i]
             if(investedCapital2 < 0): 
-                investedCapital2 = Utility.myFloat(totalDebt[i]) + researchCap - researchAmor - (.80 * Utility.myFloat(cash[i])) - Utility.myFloat(nonCurrent[i])
+                investedCapital2 = Utility.myFloat(totalDebt[i]) + researchCap - researchAmor - (.80 * Utility.myFloat(cash[i])) - Utility.myFloat(nonCurrent[i]) + operatingLease[i]
                 
 #             """If investedCapital1 is much smaller than investedCapital2, investedCapital1 may not have Investments  """
 #             if(investedCapital1 < investedCapital2 * 0.75):
@@ -254,6 +261,7 @@ class TickerFundamentals:
             
             investedCapital.append([investedCapital1, investedCapital2])
         
+#         print("invested cap")
 #         for i in investedCapital:
 #             print(i)
             
@@ -346,6 +354,47 @@ class TickerFundamentals:
         reinvestment.append(reinvestment[-1])
         return reinvestment
     
+    def getROE(self):
+        Tequity = self.getVariable("Shareholders Equity-QB")
+        Tdividends = self.getVariable("Payment of Dividends & Other Cash Distributions-TC")
+        Trepurchases = self.getVariable("Issuance (Purchase) of Equity Shares-TC")
+        weightAverageShares = self.getVariable("Weighted Average Shares Diluted-T", "Weighted Average Shares-T")
+        
+        equity = []
+        dividends = []
+        repurchases = []
+        for i in range(0, len(Tequity)):
+            equity.append(Utility.myFloat(Tequity[i]) / Utility.myFloat(weightAverageShares[i]))
+            dividends.append(Utility.myFloat(Tdividends[i]) / Utility.myFloat(weightAverageShares[i]))
+            repurchases.append(Utility.myFloat(Trepurchases[i]) / Utility.myFloat(weightAverageShares[i]))
+        
+        for i in equity:
+            print(i)
+            
+        changeInEquity = []
+        i = 1
+        while(i < len(equity)):
+            changeInEquity.append(equity[i-1]- equity[i])
+            i += 1
+        
+        """Comprehensive income = Change in Equity + Dividends + Buybacks. 
+        As of July 2018, I believe this approximates comprehensive income which is 
+        net income + unrealized gains/losses + pension gains/losses + currency effects. 
+        
+        Comprehensive income is an idea of what a financial company firm can make including realized gains, 
+        net income gained from fees, trading etc, and unrealized gains on the balance sheet. 
+         """
+        ROE = []
+        i = 0
+        while(i < len(changeInEquity)):
+            ROE.append((changeInEquity[i] - dividends[i] - repurchases[i]) / equity[i+1])
+            i += 1
+        
+        
+        return ROE
+            
+        
+    
     """-----------------------------------------------------------------------------
     Returns revenues, gross margin, operating margin, net income, 
     -----------------------------------------------------------------------------"""
@@ -366,7 +415,7 @@ class TickerFundamentals:
             roic.append(roic[-1])
             i += 1
         
-        revenues = self.getVariable("Revenues-T")
+        revenues = self.getVariable("Revenue-T", "Revenues-T")
         gross = self.getVariable("Gross Profit-T")
         operating = self.getVariable("Operating Income-T")
         netIncome = self.getVariable("Net Income-T")
@@ -400,6 +449,7 @@ class TickerFundamentals:
         8 - ROIC
           - AveragePrice
         """
+
         for i in range(0, len(revenues)):
             spreadSheet.append([date[i], Utility.myFloat(revenues[i]),
                                 str(round(Utility.myFloat(gross[i])/Utility.myFloat(revenues[i]), 4)), 
@@ -408,7 +458,8 @@ class TickerFundamentals:
                                 str(round(Utility.myFloat(reinvestment[i])/Utility.myFloat(NOPLAT[i]) , 4)),
                                 str(round(Utility.myFloat(netIncome[i])/Utility.myFloat(revenues[i]), 4)),
                                 str(round(Utility.myFloat(netIncome[i])/Utility.myFloat(numShares[i]), 4)),
-                                str(round(Utility.myFloat(fcf[i])/Utility.myFloat(numShares[i]), 4)), 
+                                str(round(Utility.myFloat(fcf[i])/Utility.myFloat(numShares[i]), 4)),
+                                str(round(Utility.myFloat(fcf[i])/Utility.myFloat(revenues[i]), 4)), 
                                 str(round(Utility.myFloat(cashDebt[i])/Utility.myFloat(numShares[i]), 4)), 
                                 str(round(roic[i], 4)),
                                 str(round(Utility.myFloat(averagePrice[i]),2)) ])
@@ -419,10 +470,10 @@ class TickerFundamentals:
 
              
  
-# t = TickerFundamentals("FB")
-# value = t.getVariable("Free Cash Flow-TC")
+# t = TickerFundamentals("MKL")
+# value = t.getROE()
 # for i in value:
 #     print(i)
-     
+       
      
     

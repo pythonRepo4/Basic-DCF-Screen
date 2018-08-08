@@ -2,6 +2,33 @@ from Analyze import Ratios #@UnresolvedImport
 from Analyze import GetData #@UnresolvedImport
 import Utility
 
+def getPerShareValue(tickerName, getData = None):
+    f = Ratios.TickerFundamentals(tickerName, getData)
+    fcf = f.getFCF()
+    ROIC = f.getROIC()[1]
+    IR = f.reinvestment()
+    NOPLAT = f.getNOPLAT()
+    numShares = f.numShares()
+    cashDebt = f.getCashDebt()
+    
+    fcfPerShare = []
+    for i in range(0, len(fcf)):
+        fcfPerShare.append(Utility.myFloat(fcf[i]) / Utility.myFloat(numShares[i]))
+        
+    cashDebtShare = []
+    for i in range(0, len(cashDebt)):
+        cashDebtShare.append(Utility.myFloat(cashDebt[i]) / Utility.myFloat(numShares[i]))
+        
+    cashDebt = cashDebtShare[0]
+    fcfNow = fcfPerShare[0]
+    try:
+        fcf_3yr = (fcfPerShare[0] + fcfPerShare[1] + fcfPerShare[2]) / 3
+    except:
+        fcf_3yr = (fcfPerShare[0] + fcfPerShare[1]) / 2
+        
+    return fcfNow, fcf_3yr, cashDebt
+
+
 def getValue(tickerName, getData = None):   
     f = Ratios.TickerFundamentals(tickerName, getData)
     fcf = f.getFCF()
@@ -56,56 +83,24 @@ def getValue(tickerName, getData = None):
                 (fcf_3yrAverage / (discountRate - lowGrowth) / numShares) + (cashDebt / numShares), 
                 highGrowthMultiplier * fcf_3yrAverage / numShares + (cashDebt/numShares)
                 ]
-#  
+  
 #     print("FCF Now : " + "{:,}".format(fcf[0]))
 #     print("FCF 3yr Avg : " + "{:,}".format(fcf_3yrAverage))
 #     print("High Growth : " +  str(highGrowth))
 #     print(value)
 #     print(valueAvg)
-#     
+     
     return fcf[0], fcf_3yrAverage, value, valueAvg
 
 
-# list = ["AAL", "AAP", "AAPL", "AMAT", "AMD", "AMZN", "BA", "BBY", "CACC", "CMCSA", "CMG", "CTL", "DG", "DIS", "ENVA", "CVS", "FAST", "F", "FB", "FIVE", 
-#         "GE", "GM", "GOOGL", "GWW", "IBM", "INTC", "IPGP", "JNJ", "JWN", "M", "MCD", "MO", "MU", "NVDA", "PZZA", "QCOM", "SBUX", "SWKS", "TGT", "WMT", "XOM", 
-#         "WAB", "WDFC", "FIZZ", "YUM", "TSN", "THRM", "KMX", "T", "SJM", "MAR", "ACN", "ADS", "CBS", "CSCO", "CVX", "GLW", "EMN", "FL", "HD", "SHW", "VZ", "DIS"]
+# list = ['AMWD', 'BIIB', 'EXPO', 'FB', 'FAST', 'IPGP', 'LNTH', 'ORLY', 'ROST', 'SWKS', 'ULTA', 'AZO', 'FDS', 'GPS', 'HD', 'OOMA', 'PSTG', 'RHT', 'ROL', 'TSE', 'UNH', 'AMZN', 'AMAT', 'BBY', 'HRB', 'CHRW', 'CELG', 'CNC', 'CI', 'CLX', 'CL', 'EW', 'EA', 'GRMN', 'HAS', 'HUM', 'KLAC', 'LB', 'LRCX', 'LYB', 'MAS', 'MCD', 'MTD', 'MU', 'MSFT', 'MNST', 'MSI', 'NVDA', 'REGN', 'RHI', 'ROK', 'SHW', 'SPGI', 'TXN', 'HSY', 'UPS', 'VAR', 'INCY', 'MXIM', 'SIRI', 'ABMD', 'ALGN', 'AZPN', 'CDNS', 'CDK', 'CBPO', 'CRUS', 'CGNX', 'FIVE', 'LOPE', 'HA', 'HQY', 'LSTR', 'LOGI', 'LULU', 'LITE', 'MASI', 'MTCH', 'PZZA', 'PPC', 'SAFM', 'STMP', 'BIO', 'BURL', 'BWXT', 'CC', 'ENR', 'EPAM', 'GDDY', 'GGG', 'HLF', 'LPI', 'LEA', 'LII', 'LPX', 'RBA', 'RES', 'NOW', 'TNH', 'THO', 'TTC', 'VEEV', 'WBC', 'WSM', 'YELP', 'MIK', 'TREX', 'PZZA', 'ADP', 'PZZA', 'ADP', 'DENN', 'IRBT', 'KBAL', 'MSBI', 'QLYS', 'RUTH', 'PRSC', 'UCTT', 'WING']
+# 
 # for i in list:
 #     print(i)
-#     print(getValue(i))
+#     getValue(i)
 #     print("")
 
-
-# def getEquityValue(tickerName, getData = None):
-#     f = Ratios.TickerFundamentals(tickerName, getData)
-#     ROE, CAGR = f.getROE()
-#     equity = f.getEquity() * .85
-#     numShares = f.numShares() 
-#     
-# #     print("{:,}".format(equity))
-# #     print("{:,}".format(numShares))
-#     
-#     ROEtotal = sum(ROE)/len(ROE)
-#     ROErecent = sum(ROE[0:4])/len(ROE[0:4])
-#     
-#     ROEpossible = sorted([CAGR, ROEtotal, ROErecent])
-#     
-#     if(ROEpossible[1] < 0): 
-#         print('Possible negative value')
-#         print(ROEpossible)
-#     
-#     WACC = .09
-#     g = .025
-#     
-#     multiplier = ROEpossible[1] / (WACC-g)
-#     
-#     value = [["ROE = " + "{0:.4f}".format(ROEpossible[0]) , equity * (ROEpossible[0] / (WACC - (g - 0.005))) / numShares],
-#              ["ROE = " + "{0:.4f}".format(ROEpossible[1]) , equity * (ROEpossible[1] / (WACC - g)) / numShares],
-#              ["ROE = " + "{0:.4f}".format(ROEpossible[2]) , equity * (ROEpossible[2] / (WACC - (g + 0.005))) / numShares]
-#         ]
-#     
-# #     for i in value:
-# #         print(i)
-#     return value
+# getValue("SBUX")
 
 
 
